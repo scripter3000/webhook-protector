@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🛡️ Webhook Protector</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 { 
+            color: #333; 
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        input {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .protect-btn {
+            width: 100%;
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .protect-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .protect-btn:active {
+            transform: translateY(0);
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border: 2px solid #e8f5e8;
+            display: none;
+            text-align: left;
+        }
+
+        .result.show {
+            display: block;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .error {
+            background: #ffe8e8;
+            border-color: #ffcdd2;
+        }
+
+        .result-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #2e7d32;
+            font-size: 1.1rem;
+        }
+
+        .error .result-title {
+            color: #c62828;
+        }
+
+        .protected-url {
+            word-break: break-all;
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            font-family: monospace;
+            border: 1px solid #ddd;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+
+        .copy-btn {
+            background: #4caf50;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+
+        .copy-btn:hover {
+            background: #45a049;
+        }
+
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            color: #856404;
+            font-size: 14px;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 20px;
+            margin-top: 30px;
+            border-radius: 10px;
+            text-align: left;
+        }
+
+        .info-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #1976d2;
+        }
+
+        .info-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .info-list li {
+            margin: 8px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .info-list li:before {
+            content: "•";
+            color: #2196f3;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .loading {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 30px 20px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛡️ Webhook Protector</h1>
+        <p class="subtitle">Secure your webhooks with unique, permanent URLs</p>
+        
+        <div class="input-group">
+            <input 
+                type="url" 
+                id="webhookUrl" 
+                placeholder="https://your-real-webhook-url.com/webhook" 
+                required
+            >
+        </div>
+        
+        <button class="protect-btn" onclick="protectWebhook()">
+            🔒 Protect Webhook
+        </button>
+        
+        <div id="result" class="result">
+            <div class="result-title" id="resultTitle">Your Protected Webhook URL:</div>
+            <div class="protected-url" id="protectedUrl"></div>
+            <button class="copy-btn" onclick="copyToClipboard()" id="copyBtn">📋 Copy</button>
+            
+            <div class="warning">
+                <strong>⚠️ Important:</strong> This protected URL is permanent and cannot be deleted. Only POST requests are accepted.
+            </div>
+        </div>
+
+        <div class="info-box">
+            <div class="info-title">📝 How it works:</div>
+            <ul class="info-list">
+                <li>Only <strong>POST</strong> requests are forwarded to your original webhook</li>
+                <li>Protected URLs are <strong>permanent</strong> and cannot be deleted</li>
+                <li>All POST data and headers are forwarded securely</li>
+                <li>Get instant protection with a unique, unguessable URL</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        async function protectWebhook() {
+            const webhookUrl = document.getElementById('webhookUrl').value.trim();
+            const resultDiv = document.getElementById('result');
+            const protectedUrlDiv = document.getElementById('protectedUrl');
+            const resultTitle = document.getElementById('resultTitle');
+            const btn = document.querySelector('.protect-btn');
+
+            // Validate input
+            if (!webhookUrl) {
+                alert('Please enter a webhook URL');
+                return;
+            }
+
+            try {
+                new URL(webhookUrl);
+            } catch {
+                alert('Please enter a valid URL (must start with http:// or https://)');
+                return;
+            }
+
+            // Show loading state
+            btn.textContent = '🔄 Protecting...';
+            btn.classList.add('loading');
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('/api/protect', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ webhookUrl: webhookUrl })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    protectedUrlDiv.textContent = data.protectedUrl;
+                    resultTitle.textContent = '✅ Your Protected Webhook URL:';
+                    resultDiv.classList.remove('error');
+                    resultDiv.classList.add('show');
+                    
+                    // Store for copy function
+                    window.currentProtectedUrl = data.protectedUrl;
+                } else {
+                    throw new Error(data.error || 'Failed to protect webhook');
+                }
+            } catch (error) {
+                resultDiv.classList.add('error');
+                resultTitle.textContent = '❌ Error:';
+                protectedUrlDiv.textContent = error.message;
+                resultDiv.classList.add('show');
+            } finally {
+                // Reset button
+                btn.textContent = '🔒 Protect Webhook';
+                btn.classList.remove('loading');
+                btn.disabled = false;
+            }
+        }
+
+        async function copyToClipboard() {
+            const url = window.currentProtectedUrl;
+            const copyBtn = document.getElementById('copyBtn');
+            
+            if (!url) return;
+
+            try {
+                await navigator.clipboard.writeText(url);
+                copyBtn.textContent = '✅ Copied!';
+                copyBtn.style.background = '#4caf50';
+                
+                setTimeout(() => {
+                    copyBtn.textContent = '📋 Copy';
+                    copyBtn.style.background = '#4caf50';
+                }, 2000);
+            } catch (err) {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = url;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                
+                copyBtn.textContent = '✅ Copied!';
+                setTimeout(() => {
+                    copyBtn.textContent = '📋 Copy';
+                }, 2000);
+            }
+        }
+
+        // Allow Enter key to submit
+        document.getElementById('webhookUrl').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                protectWebhook();
+            }
+        });
+    </script>
+</body>
+</html>
