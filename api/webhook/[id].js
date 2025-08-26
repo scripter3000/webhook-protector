@@ -1,69 +1,141 @@
-// Dynamic API route for webhook forwarding
-global.webhooks = global.webhooks || new Map();
+// api/webhook/[id].js - Vercel API route for handling webhooks
 
+const PASTEFY_API_KEY = "ZTMehCu66zNSZlSgxMbpwmohYjVkQYQEkMEHkTniLXwR6jLZzSGA7nx1G4NY";
+const PASTEFY_BASE_URL = "https://pastefy.app/api/v2";
+
+// Helper function to interact with Pastefy
+async function pasteFyRequest(endpoint, method = 'GET', data = null) {
+  const options = {
+    method,
+    headers: {
+      'Authorization': `Bearer ${PASTEFY_API_KEY}`,
+      'Content-Type': 'application/json'
+    }
+  };
+
+  if (data && method !== 'GET') {
+    options.body = JSON.stringify(data);
+  }
+
+  const response = await fetch(`${PASTEFY_BASE_URL}${endpoint}`, options);
+  return response.json();
+}
+
+// Get webhook data from Pastefy
+async function getWebhookData(webhookHash) {
+  try {
+    // Try to get existing webhook data
+    const response = await pasteFyRequest(`/paste/${webhookHash}`);
+    if (response.success && response.paste) {
+      return JSON.parse(response.paste.content);
+    }
+  } catch (error) {
+    console.log('Webhook not found, will create new one');
+  }
+  return null;
+}
+
+// Save webhook data to Pastefy
+async function saveWebhookData(webhookHash, webhookData) {
+  try {
+    const existingData = await getWebhookData(webhookHash);
+    
+    if (existingData) {
+      // Update existing paste
+      await pasteFyRequest(`/paste/${webhookHash}`, 'PUT', {
+        content: JSON.stringify(webhookData, null, 2),
+        title: `Webhook-${webhookHash}`,
+        folder: null
+      });
+    } else {
+      // Create new paste with webhook hash as ID
+      await pasteFyRequest('/paste', 'POST', {
+        content: JSON.stringify(webhookData, null, 2),
+        title: `Webhook-${webhookHash}`,
+        folder: null,
+        visibility: 'UNLISTED', // Keep it private
+        expire_date: null, // Never expire
+        paste_type: 'PASTE',
+        raw: false
+      });
+    }
+  } catch (error) {
+    console.error('Error saving webhook data:', error);
+    throw error;
+  }
+}
+
+// Main API handler
 export default async function handler(req, res) {
-    // Only allow POST method
-    if (req.method !== 'POST') {
-        return res.status(405).json({ 
-            error: 'Method not allowed. Only POST requests are accepted.',
-            allowedMethods: ['POST']
-        });
+  const { id } = req.query;
+  const webhookHash = id; // Get the webhook hash from URL
+
+  if (!webhookHash) {
+    return res.status(400).json({ error: 'Webhook hash required' });
+  }
+
+  try {
+    if (req.method === 'POST') {
+      // Handle webhook POST request
+      const requestBody = req.body;
+      const timestamp = new Date().toISOString();
+      
+      // Get existing webhook data or create new one
+      let webhookData = await getWebhookData(webhookHash) || {
+        hash: webhookHash,
+        created: timestamp,
+        requests: []
+      };
+
+      // Add new request to history
+      const newRequest = {
+        timestamp,
+        method: req.method,
+        headers: req.headers,
+        body: requestBody,
+        ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress
+      };
+
+      webhookData.requests.push(newRequest);
+      webhookData.lastActivity = timestamp;
+
+      // Keep only last 100 requests to avoid storage limits
+      if (webhookData.requests.length > 100) {
+        webhookData.requests = webhookData.requests.slice(-100);
+      }
+
+      // Save updated data
+      await saveWebhookData(webhookHash, webhookData);
+
+      return res.status(200).json({ 
+        success: true, 
+        message: 'Webhook received and stored',
+        hash: webhookHash,
+        timestamp
+      });
+
+    } else if (req.method === 'GET') {
+      // Handle webhook GET request (view stored data)
+      const webhookData = await getWebhookData(webhookHash);
+      
+      if (!webhookData) {
+        return res.status(404).json({ error: 'Webhook not found' });
+      }
+
+      return res.status(200).json({
+        success: true,
+        webhook: webhookData
+      });
+
+    } else {
+      return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    try {
-        const { id } = req.query;
-        
-        // Find the webhook data
-        const webhookData = global.webhooks.get(id);
-        
-        if (!webhookData) {
-            return res.status(404).json({ 
-                error: 'Protected webhook not found' 
-            });
-        }
-
-        // Increment request count
-        webhookData.requestCount++;
-
-        // Forward the POST request to the original webhook
-        const fetch = (await import('node-fetch')).default;
-        
-        const forwardOptions = {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'User-Agent': 'Webhook-Protector/1.0',
-                'X-Forwarded-For': req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown',
-                'X-Original-Host': req.headers.host,
-                'X-Protected-Webhook-Id': id
-            },
-            body: JSON.stringify(req.body)
-        };
-
-        console.log(`Forwarding POST to: ${webhookData.originalUrl}`);
-
-        const response = await fetch(webhookData.originalUrl, forwardOptions);
-        const responseText = await response.text();
-        
-        // Forward the response status
-        res.status(response.status);
-        
-        // Copy important response headers
-        response.headers.forEach((value, key) => {
-            if (!['content-length', 'transfer-encoding', 'connection'].includes(key.toLowerCase())) {
-                res.setHeader(key, value);
-            }
-        });
-        
-        res.send(responseText);
-
-        console.log(`✅ Forwarded POST request for protected webhook ${id} (${webhookData.requestCount} total requests)`);
-
-    } catch (error) {
-        console.error('❌ Error forwarding webhook:', error);
-        res.status(500).json({ 
-            error: 'Failed to forward webhook request',
-            details: error.message 
-        });
-    }
+  } catch (error) {
+    console.error('Webhook handler error:', error);
+    return res.status(500).json({ 
+      error: 'Internal server error',
+      message: error.message 
+    });
+  }
 }
