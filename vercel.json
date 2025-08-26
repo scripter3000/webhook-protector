@@ -13,5 +13,10 @@
       "src": "^/api/create-webhook$",
       "dest": "/api/create-webhook"
     }
-  ]
+  ],
+  "functions": {
+    "api/**/*.js": {
+      "runtime": "@vercel/node@20.x"
+    }
+  }
 }
