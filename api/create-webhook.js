@@ -1,4 +1,3 @@
-// API route to create protected webhooks
 global.webhooks = global.webhooks || new Map();
 
 export default async function handler(req, res) {
@@ -13,11 +12,11 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: 'originalUrl is required' });
         }
 
-        // Generate hash (you might want to use crypto for better hashing)
+        // Generate hash
         const crypto = require('crypto');
-        const id = crypto.createHash('md5').update(originalUrl).digest('hex');
+        const id = crypto.createHash('md5').update(originalUrl + Date.now()).digest('hex');
         
-        // Store the webhook data
+        // Store webhook
         global.webhooks.set(id, {
             originalUrl,
             requestCount: 0,
@@ -26,7 +25,7 @@ export default async function handler(req, res) {
 
         res.json({
             protectedId: id,
-            protectedUrl: `https://webhook-protector.vercel.app/api/webhook/${id}`,
+            protectedUrl: `${req.headers['x-forwarded-proto'] || 'https'}://${req.headers.host}/api/webhook/${id}`,
             originalUrl
         });
 
