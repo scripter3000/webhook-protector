@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🛡️ Webhook Protector</title>
+    <title>Webhook Protector Dashboard</title>
     <style>
         * {
             margin: 0;
@@ -11,346 +11,357 @@
             box-sizing: border-box;
         }
 
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             padding: 20px;
         }
 
         .container {
-            background: white;
-            padding: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
             border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            max-width: 600px;
-            width: 100%;
-            text-align: center;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
         }
 
-        h1 { 
-            color: #333; 
-            margin-bottom: 10px;
-            font-size: 2.5rem;
-        }
-
-        .subtitle {
-            color: #666;
+        h1 {
+            color: #333;
             margin-bottom: 30px;
-            font-size: 1.1rem;
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 700;
         }
 
-        .input-group {
+        .webhook-form {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border: 2px solid #e9ecef;
+        }
+
+        .form-group {
             margin-bottom: 20px;
         }
 
-        input {
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        input, textarea {
             width: 100%;
-            padding: 15px 20px;
-            border: 2px solid #e0e0e0;
+            padding: 12px;
+            border: 2px solid #e9ecef;
             border-radius: 10px;
             font-size: 16px;
             transition: all 0.3s ease;
-            outline: none;
         }
 
-        input:focus {
+        input:focus, textarea:focus {
+            outline: none;
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
-        .protect-btn {
-            width: 100%;
-            padding: 15px 20px;
+        .btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
+            padding: 12px 30px;
             border: none;
             border-radius: 10px;
-            font-size: 18px;
-            font-weight: 600;
             cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
             transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            text-decoration: none;
+            display: inline-block;
+            margin: 5px;
         }
 
-        .protect-btn:hover {
+        .btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
         }
 
-        .protect-btn:active {
-            transform: translateY(0);
-        }
-
-        .result {
-            margin-top: 30px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 15px;
-            border: 2px solid #e8f5e8;
-            display: none;
-            text-align: left;
-        }
-
-        .result.show {
-            display: block;
-            animation: slideIn 0.3s ease-out;
-        }
-
-        .error {
-            background: #ffe8e8;
-            border-color: #ffcdd2;
-        }
-
-        .result-title {
-            font-weight: bold;
-            margin-bottom: 10px;
-            color: #2e7d32;
-            font-size: 1.1rem;
-        }
-
-        .error .result-title {
-            color: #c62828;
-        }
-
-        .protected-url {
-            word-break: break-all;
+        .webhook-card {
             background: white;
-            padding: 12px;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .webhook-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .webhook-url {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            word-break: break-all;
+            border: 2px solid #e9ecef;
+            margin: 15px 0;
+        }
+
+        .request-history {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .request-item {
+            background: white;
+            padding: 10px;
+            margin-bottom: 10px;
             border-radius: 8px;
-            font-family: monospace;
-            border: 1px solid #ddd;
-            margin: 10px 0;
+            border-left: 4px solid #667eea;
             font-size: 14px;
         }
 
+        .timestamp {
+            color: #6c757d;
+            font-size: 12px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
         .copy-btn {
-            background: #4caf50;
+            background: #28a745;
             color: white;
             border: none;
-            padding: 8px 16px;
+            padding: 8px 15px;
             border-radius: 6px;
             cursor: pointer;
             font-size: 12px;
             margin-left: 10px;
         }
 
-        .copy-btn:hover {
-            background: #45a049;
+        .loading {
+            text-align: center;
+            color: #6c757d;
+            margin: 20px 0;
         }
 
-        .warning {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
+        .error {
+            background: #f8d7da;
+            color: #721c24;
             padding: 15px;
             border-radius: 10px;
-            margin-top: 15px;
-            color: #856404;
-            font-size: 14px;
+            margin: 15px 0;
         }
 
-        .info-box {
-            background: #e3f2fd;
-            border-left: 4px solid #2196f3;
-            padding: 20px;
-            margin-top: 30px;
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
             border-radius: 10px;
-            text-align: left;
-        }
-
-        .info-title {
-            font-weight: bold;
-            margin-bottom: 10px;
-            color: #1976d2;
-        }
-
-        .info-list {
-            list-style: none;
-            padding: 0;
-        }
-
-        .info-list li {
-            margin: 8px 0;
-            padding-left: 20px;
-            position: relative;
-        }
-
-        .info-list li:before {
-            content: "•";
-            color: #2196f3;
-            font-weight: bold;
-            position: absolute;
-            left: 0;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .loading {
-            opacity: 0.7;
-            cursor: not-allowed;
-        }
-
-        @media (max-width: 600px) {
-            .container {
-                padding: 30px 20px;
-            }
-            
-            h1 {
-                font-size: 2rem;
-            }
+            margin: 15px 0;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🛡️ Webhook Protector</h1>
-        <p class="subtitle">Secure your webhooks with unique, permanent URLs</p>
         
-        <div class="input-group">
-            <input 
-                type="url" 
-                id="webhookUrl" 
-                placeholder="https://your-real-webhook-url.com/webhook" 
-                required
-            >
-        </div>
-        
-        <button class="protect-btn" onclick="protectWebhook()">
-            🔒 Protect Webhook
-        </button>
-        
-        <div id="result" class="result">
-            <div class="result-title" id="resultTitle">Your Protected Webhook URL:</div>
-            <div class="protected-url" id="protectedUrl"></div>
-            <button class="copy-btn" onclick="copyToClipboard()" id="copyBtn">📋 Copy</button>
-            
-            <div class="warning">
-                <strong>⚠️ Important:</strong> This protected URL is permanent and cannot be deleted. Only POST requests are accepted.
-            </div>
+        <div class="webhook-form">
+            <h2>Create New Webhook</h2>
+            <form id="webhookForm">
+                <div class="form-group">
+                    <label for="description">Description (optional)</label>
+                    <input type="text" id="description" name="description" placeholder="Enter webhook description">
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="rateLimit" name="rateLimit"> Enable Rate Limiting
+                    </label>
+                </div>
+                <button type="submit" class="btn">Create Webhook</button>
+            </form>
         </div>
 
-        <div class="info-box">
-            <div class="info-title">📝 How it works:</div>
-            <ul class="info-list">
-                <li>Only <strong>POST</strong> requests are forwarded to your original webhook</li>
-                <li>Protected URLs are <strong>permanent</strong> and cannot be deleted</li>
-                <li>All POST data and headers are forwarded securely</li>
-                <li>Get instant protection with a unique, unguessable URL</li>
-            </ul>
+        <div id="message"></div>
+
+        <div id="webhookList">
+            <h2>Your Webhooks</h2>
+            <div id="webhooks" class="loading">Loading webhooks...</div>
         </div>
     </div>
 
     <script>
-        async function protectWebhook() {
-            const webhookUrl = document.getElementById('webhookUrl').value.trim();
-            const resultDiv = document.getElementById('result');
-            const protectedUrlDiv = document.getElementById('protectedUrl');
-            const resultTitle = document.getElementById('resultTitle');
-            const btn = document.querySelector('.protect-btn');
+        let webhooks = JSON.parse(localStorage.getItem('webhooks') || '[]');
 
-            // Validate input
-            if (!webhookUrl) {
-                alert('Please enter a webhook URL');
-                return;
-            }
+        document.getElementById('webhookForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const data = {
+                description: formData.get('description') || 'Auto-generated webhook',
+                rateLimit: formData.get('rateLimit') === 'on'
+            };
 
             try {
-                new URL(webhookUrl);
-            } catch {
-                alert('Please enter a valid URL (must start with http:// or https://)');
-                return;
-            }
-
-            // Show loading state
-            btn.textContent = '🔄 Protecting...';
-            btn.classList.add('loading');
-            btn.disabled = true;
-
-            try {
-                const response = await fetch('/api/protect', {
+                showMessage('Creating webhook...', 'loading');
+                
+                const response = await fetch('/api/create-webhook', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
+                        'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ webhookUrl: webhookUrl })
+                    body: JSON.stringify(data)
                 });
 
-                const data = await response.json();
+                const result = await response.json();
 
-                if (data.success) {
-                    protectedUrlDiv.textContent = data.protectedUrl;
-                    resultTitle.textContent = '✅ Your Protected Webhook URL:';
-                    resultDiv.classList.remove('error');
-                    resultDiv.classList.add('show');
-                    
-                    // Store for copy function
-                    window.currentProtectedUrl = data.protectedUrl;
+                if (result.success) {
+                    webhooks.push(result.webhook);
+                    localStorage.setItem('webhooks', JSON.stringify(webhooks));
+                    showMessage('Webhook created successfully!', 'success');
+                    renderWebhooks();
+                    e.target.reset();
                 } else {
-                    throw new Error(data.error || 'Failed to protect webhook');
+                    showMessage('Error: ' + result.message, 'error');
                 }
             } catch (error) {
-                resultDiv.classList.add('error');
-                resultTitle.textContent = '❌ Error:';
-                protectedUrlDiv.textContent = error.message;
-                resultDiv.classList.add('show');
-            } finally {
-                // Reset button
-                btn.textContent = '🔒 Protect Webhook';
-                btn.classList.remove('loading');
-                btn.disabled = false;
-            }
-        }
-
-        async function copyToClipboard() {
-            const url = window.currentProtectedUrl;
-            const copyBtn = document.getElementById('copyBtn');
-            
-            if (!url) return;
-
-            try {
-                await navigator.clipboard.writeText(url);
-                copyBtn.textContent = '✅ Copied!';
-                copyBtn.style.background = '#4caf50';
-                
-                setTimeout(() => {
-                    copyBtn.textContent = '📋 Copy';
-                    copyBtn.style.background = '#4caf50';
-                }, 2000);
-            } catch (err) {
-                // Fallback for older browsers
-                const textArea = document.createElement('textarea');
-                textArea.value = url;
-                document.body.appendChild(textArea);
-                textArea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textArea);
-                
-                copyBtn.textContent = '✅ Copied!';
-                setTimeout(() => {
-                    copyBtn.textContent = '📋 Copy';
-                }, 2000);
-            }
-        }
-
-        // Allow Enter key to submit
-        document.getElementById('webhookUrl').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                protectWebhook();
+                showMessage('Error creating webhook: ' + error.message, 'error');
             }
         });
+
+        function showMessage(message, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.innerHTML = `<div class="${type}">${message}</div>`;
+            
+            if (type !== 'loading') {
+                setTimeout(() => {
+                    messageDiv.innerHTML = '';
+                }, 5000);
+            }
+        }
+
+        async function loadWebhookData(webhook) {
+            try {
+                const response = await fetch(`/api/webhook/${webhook.hash}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    return data.webhook;
+                }
+            } catch (error) {
+                console.error('Error loading webhook data:', error);
+            }
+            return null;
+        }
+
+        async function renderWebhooks() {
+            const webhooksDiv = document.getElementById('webhooks');
+            
+            if (webhooks.length === 0) {
+                webhooksDiv.innerHTML = '<p>No webhooks created yet. Create your first webhook above!</p>';
+                return;
+            }
+
+            webhooksDiv.innerHTML = '<div class="loading">Loading webhook data...</div>';
+
+            let html = '';
+            
+            for (const webhook of webhooks) {
+                const webhookData = await loadWebhookData(webhook);
+                const requestCount = webhookData ? webhookData.requests.length : 0;
+                const lastActivity = webhookData ? webhookData.lastActivity : webhook.created;
+                
+                html += `
+                    <div class="webhook-card">
+                        <h3>${webhook.description || 'Untitled Webhook'}</h3>
+                        <span class="status-badge ${requestCount > 0 ? 'status-active' : 'status-inactive'}">
+                            ${requestCount} requests
+                        </span>
+                        
+                        <div class="webhook-url">
+                            ${webhook.url}
+                            <button class="copy-btn" onclick="copyToClipboard('${webhook.url}')">Copy</button>
+                        </div>
+                        
+                        <div style="margin-top: 15px;">
+                            <strong>Created:</strong> <span class="timestamp">${new Date(webhook.created).toLocaleString()}</span><br>
+                            <strong>Last Activity:</strong> <span class="timestamp">${lastActivity ? new Date(lastActivity).toLocaleString() : 'Never'}</span>
+                        </div>
+
+                        ${webhookData && webhookData.requests.length > 0 ? `
+                        <div class="request-history">
+                            <strong>Recent Requests:</strong>
+                            ${webhookData.requests.slice(-5).reverse().map(req => `
+                                <div class="request-item">
+                                    <strong>${req.method}</strong> from ${req.ip || 'Unknown'}
+                                    <div class="timestamp">${new Date(req.timestamp).toLocaleString()}</div>
+                                    ${req.body ? `<div style="margin-top: 5px;"><code>${JSON.stringify(req.body).substring(0, 100)}...</code></div>` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                        ` : ''}
+                        
+                        <div style="margin-top: 15px;">
+                            <button class="btn" onclick="refreshWebhook('${webhook.hash}')">Refresh</button>
+                            <button class="btn" style="background: #dc3545;" onclick="deleteWebhook('${webhook.hash}')">Delete</button>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            webhooksDiv.innerHTML = html;
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showMessage('URL copied to clipboard!', 'success');
+            });
+        }
+
+        function refreshWebhook(hash) {
+            renderWebhooks();
+        }
+
+        function deleteWebhook(hash) {
+            if (confirm('Are you sure you want to delete this webhook?')) {
+                webhooks = webhooks.filter(w => w.hash !== hash);
+                localStorage.setItem('webhooks', JSON.stringify(webhooks));
+                renderWebhooks();
+                showMessage('Webhook deleted successfully!', 'success');
+            }
+        }
+
+        // Initial load
+        renderWebhooks();
     </script>
 </body>
 </html>
