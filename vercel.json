@@ -1,5 +1,4 @@
 {
-  "version": 2,
   "routes": [
     {
       "src": "^/dashboard$",
@@ -13,10 +12,5 @@
       "src": "^/api/create-webhook$",
       "dest": "/api/create-webhook"
     }
-  ],
-  "functions": {
-    "api/**/*.js": {
-      "runtime": "@vercel/node@20.x"
-    }
-  }
+  ]
 }
